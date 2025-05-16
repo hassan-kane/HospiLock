@@ -1,0 +1,73 @@
+@startuml
+skinparam rectangleLineWidth 2
+
+package "Structure des Groupes" {
+    [G_Hopital] as hopital
+    [G_Medical] as medical
+    [G_Administratif] as admin
+    [G_Support] as support
+}
+
+package "Sous-groupes médicaux" {
+    [G_Medecins] as medecins
+    [G_Infirmiers] as infirmiers
+}
+
+package "Sous-groupes administratifs" {
+    [G_RH] as rh
+    [G_Comptables] as comptables
+    [G_Direction] as direction
+}
+
+package "Sous-groupes supports" {
+    [G_IT] as it
+    [G_Communication] as communication
+}
+
+hopital --> medical
+hopital --> admin
+hopital --> support
+
+medical --> medecins
+medical --> infirmiers
+
+admin --> rh
+admin --> comptables
+admin --> direction
+
+support --> it
+support --> communication
+
+note bottom of hopital
+  Groupe principal englobant tous les autres groupes
+end note
+
+note bottom of medecins
+  Accès : D:\Dossiers_Patients, D:\Soins, D:\Comptes_Rendus
+end note
+
+note bottom of infirmiers
+  Accès : D:\Soins
+end note
+
+note bottom of rh
+  Accès : D:\RH
+end note
+
+note bottom of comptables
+  Accès : D:\Finance
+end note
+
+note bottom of direction
+  Accès : D:\Direction, D:\Comptes_Rendus
+end note
+
+note bottom of communication
+  Accès : D:\Communication
+end note
+
+note bottom of it
+  Accès : D:\Outils_Systeme + outils système (PowerShell, CMD, etc.)
+end note
+
+@enduml
