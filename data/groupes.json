@@ -1,0 +1,11 @@
+{
+  "groupes": [
+    { "nom": "G_Medecins" },
+    { "nom": "G_Infirmiers" },
+    { "nom": "G_Direction" },
+    { "nom": "G_Comptables" },
+    { "nom": "G_RH" },
+    { "nom": "G_Communication" },
+    { "nom": "G_IT" }
+  ]
+}
