@@ -1,0 +1,79 @@
+{
+    "profils": [
+        {
+            "profil": "Medecin",
+            "utilisateurs": [
+                {
+                    "nom": "medecin1",
+                    "prenom": "Alice",
+                    "defaultMotDePasse": "P@ssw0rd1"
+                },
+                {
+                    "nom": "medecin2",
+                    "prenom": "Hugo",
+                    "defaultMotDePasse": "P@ssw0rd2"
+                }
+            ]
+        },
+        {
+            "profil": "Infirmier",
+            "utilisateurs": [
+                {
+                    "nom": "infirmier1",
+                    "prenom": "Léa",
+                    "defaultMotDePasse": "Inf@2024"
+                }
+            ]
+        },
+        {
+            "profil": "Comptable",
+            "utilisateurs": [
+                {
+                    "nom": "comptable1",
+                    "prenom": "Marc",
+                    "defaultMotDePasse": "Fin@2024"
+                }
+            ]
+        },
+        {
+            "profil": "RH",
+            "utilisateurs": [
+                {
+                    "nom": "rh1",
+                    "prenom": "Sophie",
+                    "defaultMotDePasse": "Rh#2024"
+                }
+            ]
+        },
+        {
+            "profil": "IT",
+            "utilisateurs": [
+                {
+                    "nom": "info1",
+                    "prenom": "Samir",
+                    "defaultMotDePasse": "Adm1n2024!"
+                }
+            ]
+        },
+        {
+            "profil": "Communication",
+            "utilisateurs": [
+                {
+                    "nom": "com1",
+                    "prenom": "Emma",
+                    "defaultMotDePasse": "Com@2024"
+                }
+            ]
+        },
+        {
+            "profil": "Direction",
+            "utilisateurs": [
+                {
+                    "nom": "directeur1",
+                    "prenom": "Martin",
+                    "defaultMotDePasse": "Dir2024!"
+                }
+            ]
+        }
+    ]
+}
