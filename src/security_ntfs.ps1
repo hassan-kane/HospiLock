@@ -1,4 +1,4 @@
-﻿param (
+param (
     [string]$PermissionsJSON = ".\permissions.json"
 )
 
@@ -56,7 +56,7 @@ foreach ($exe in $executables) {
         $acl = Get-Acl $exe
 
         $deny = New-Object System.Security.AccessControl.FileSystemAccessRule(
-            "Users", "ReadAndExecute", "None", "None", "Deny"
+            "Utilisateurs", "ReadAndExecute", "None", "None", "Deny"
         )
 
         $allow = New-Object System.Security.AccessControl.FileSystemAccessRule(
@@ -71,6 +71,6 @@ foreach ($exe in $executables) {
     }
 }
 
-$admin = [ADSI]"WinNT://./Administrator,User"
+$admin = [ADSI]"WinNT://./Administrateur,User"
 $admin.SetPassword("Admin@2025!")
 Write-Host "Mot de passe administrateur local défini."
