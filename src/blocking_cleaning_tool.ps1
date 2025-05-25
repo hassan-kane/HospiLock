@@ -27,7 +27,7 @@ function Clear-JsonFile {
     )
     try {
         Set-Content -Path $path -Value $emptyContent -Encoding UTF8
-        Write-Output "Fichier vidé : $path"
+        Write-Output "✅ JSON vidé avec succès : $path"
     } catch {
         Write-Warning "Impossible de vider le fichier : $path"
     }
