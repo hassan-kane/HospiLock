@@ -1,14 +1,16 @@
 <#
 .SYNOPSIS
-    Script de restriction d’accès aux outils système et de nettoyage d’environnement.
+    Script de nettoyage basé sur les fichiers JSON du projet.
 .DESCRIPTION
-    - Bloque cmd.exe, powershell.exe, control.exe pour les groupes non autorisés
-    - Fournit des options de nettoyage : utilisateurs, groupes, ressources, ou tout
+    - Supprime les utilisateurs listés dans resources.json et utilisateurs.json
+    - Supprime les groupes listés dans groupes.json
+    - Supprime les dossiers listés dans permissions.json
+    - Vide tous les fichiers JSON utilisés
 .PARAMETERS
-    -clear_all        Supprime utilisateurs, groupes et ressources
+    -clear_all        Supprime tout : utilisateurs, groupes, ressources
     -clear_users      Supprime uniquement les utilisateurs JSON
     -clear_groups     Supprime uniquement les groupes JSON
-    -clear_res        Supprime uniquement le dossier D:\Hopital
+    -clear_res        Supprime uniquement les dossiers JSON
 #>
 
 param (
@@ -18,84 +20,88 @@ param (
     [switch]$clear_res
 )
 
-# == CONFIGURATION ==
+function Clear-JsonFile {
+    param (
+        [string]$path,
+        [string]$emptyContent
+    )
+    try {
+        Set-Content -Path $path -Value $emptyContent -Encoding UTF8
+        Write-Output "✅ JSON vidé avec succès : $path"
+    } catch {
+        Write-Warning "Impossible de vider le fichier : $path"
+    }
+}
 
-# Outils à restreindre
-$systemTools = @(
-    "$env:SystemRoot\System32\cmd.exe",
-    "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe",
-    "$env:SystemRoot\System32\control.exe"
-)
+function Clear-Users {
+    $userFiles = @("../data/resources.json", "../data/utilisateurs.json")
 
-# Groupes qui n'ont PAS le droit d'accès
-$restrictedGroups = @("G_Medecins", "G_Infirmiers", "G_RH", "G_Comptables", "G_Direction", "G_Communication")
-
-# == FONCTION : Restriction d'accès NTFS ==
-function Restrict-SystemTools {
-    foreach ($tool in $systemTools) {
-        if (Test-Path $tool) {
+    foreach ($file in $userFiles) {
+        if (Test-Path $file) {
             try {
-                $acl = Get-Acl $tool
-                foreach ($group in $restrictedGroups) {
-                    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-                        ".\\$group",                         # Groupe local
-                        "ReadAndExecute",                   # Droits à refuser
-                        "ContainerInherit,ObjectInherit",   # Héritage
-                        "None",                             # Inheritance flags
-                        "Deny"                              # Type de règle
-                    )
-                    $acl.AddAccessRule($rule)
+                $data = Get-Content $file | ConvertFrom-Json
+                foreach ($profil in $data.profils) {
+                    foreach ($user in $profil.utilisateurs) {
+                        $userName = $user.nom
+                        if (Get-LocalUser -Name $userName -ErrorAction SilentlyContinue) {
+                            Write-Output "Suppression utilisateur : $userName"
+                            Remove-LocalUser -Name $userName
+                        }
+                    }
                 }
-                Set-Acl -Path $tool -AclObject $acl
-                Write-Output "✅ Restrictions appliquées à : $tool"
+                Clear-JsonFile -path $file -emptyContent '{ "profils": [] }'
             } catch {
-                Write-Warning "❌ Erreur lors du traitement de $tool : $_"
+                Write-Warning "Erreur de traitement du fichier $file : $_"
             }
         } else {
-            Write-Warning "⚠️ Fichier introuvable : $tool"
+            Write-Warning "Fichier non trouvé : $file"
         }
     }
 }
 
-# == FONCTION : Nettoyage des utilisateurs ==
-function Clear-Users {
-    $users = (Get-Content "./data/utilisateurs.json" | ConvertFrom-Json).profils |
-        ForEach-Object { $_.utilisateurs } | Select-Object -ExpandProperty nom
-
-    foreach ($user in $users) {
-        if (Get-LocalUser -Name $user -ErrorAction SilentlyContinue) {
-            Write-Output "🧹 Suppression de l'utilisateur : $user"
-            Remove-LocalUser -Name $user
-        }
-    }
-}
-
-# == FONCTION : Nettoyage des groupes ==
 function Clear-Groups {
-    $groups = (Get-Content "./data/groupes.json" | ConvertFrom-Json).groupes |
-        Select-Object -ExpandProperty nom
-
-    foreach ($group in $groups) {
-        if (Get-LocalGroup -Name $group -ErrorAction SilentlyContinue) {
-            Write-Output "🧹 Suppression du groupe : $group"
-            Remove-LocalGroup -Name $group
+    $groupFile = "../data/groupes.json"
+    if (Test-Path $groupFile) {
+        try {
+            $groupes = (Get-Content $groupFile | ConvertFrom-Json).groupes
+            foreach ($groupe in $groupes) {
+                $nom = $groupe.nom
+                if (Get-LocalGroup -Name $nom -ErrorAction SilentlyContinue) {
+                    Write-Output "Suppression groupe : $nom"
+                    Remove-LocalGroup -Name $nom
+                }
+            }
+            Clear-JsonFile -path $groupFile -emptyContent '{ "groupes": [] }'
+        } catch {
+            Write-Warning "Erreur de traitement du fichier $groupFile : $_"
         }
-    }
-}
-
-# == FONCTION : Nettoyage des ressources ==
-function Clear-Resources {
-    $resPath = "D:\Hopital"
-    if (Test-Path $resPath) {
-        Write-Output "🧹 Suppression de : $resPath"
-        Remove-Item -Path $resPath -Recurse -Force
     } else {
-        Write-Output "📂 Aucun dossier D:\\Hopital à supprimer"
+        Write-Warning "Fichier non trouvé : $groupFile"
     }
 }
 
-# == ROUTINE PRINCIPALE ==
+function Clear-Resources {
+    $permFile = "../data/permissions.json"
+    if (Test-Path $permFile) {
+        try {
+            $permissions = Get-Content $permFile | ConvertFrom-Json
+            foreach ($item in $permissions) {
+                $path = $item.Path
+                if (Test-Path $path) {
+                    Write-Output "Suppression du dossier : $path"
+                    Remove-Item -Path $path -Recurse -Force
+                }
+            }
+            Clear-JsonFile -path $permFile -emptyContent '[]'
+        } catch {
+            Write-Warning "Erreur de traitement du fichier $permFile : $_"
+        }
+    } else {
+        Write-Warning "Fichier non trouvé : $permFile"
+    }
+}
 
+# == EXECUTION PRINCIPALE ==
 if ($clear_all) {
     Clear-Users
     Clear-Groups
@@ -111,11 +117,5 @@ elseif ($clear_res) {
     Clear-Resources
 }
 else {
-    Write-Output "==> Application des restrictions outils systèmes"
-    Restrict-SystemTools
-
-    Write-Output "`n==> Étape suivante : TESTS"
-    Write-Output "- Utilise `runas` ou une session utilisateur pour tester l'accès aux outils"
-    Write-Output "- Vérifie que seuls les informaticiens ont accès à : PowerShell, CMD, control.exe"
-    Write-Output "- Les autres groupes doivent être bloqués"
+    Write-Output "Aucun paramètre spécifié. Utilisez -clear_all, -clear_users, -clear_groups ou -clear_res"
 }
