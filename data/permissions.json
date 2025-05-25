@@ -52,7 +52,7 @@
   {
     "Path": "C:\\Public",
     "Droits": [
-      { "Groupe": "Everyone", "Permission": "ReadAndExecute" }
+      { "Groupe": "Tout le monde", "Permission": "ReadAndExecute" }
     ]
   }
 ]
