@@ -16,8 +16,8 @@ function Appliquer-Droits {
     )
 
     if (!(Test-Path $chemin)) {
-        New-Item -Path $chemin -ItemType Directory | Out-Null
-        Write-Host "Dossier créé : $chemin"
+        Write-Warning "⚠️ Le chemin '$chemin' n'existe pas. Aucune permission appliquée."
+        return
     }
 
     $acl = Get-Acl $chemin
@@ -38,13 +38,14 @@ function Appliquer-Droits {
     }
 
     Set-Acl -Path $chemin -AclObject $acl
-    Write-Host "Droits appliqués sur : $chemin"
+    Write-Host "✅ Droits appliqués sur : $chemin"
 }
 
 foreach ($item in $permissionsData) {
     Appliquer-Droits -chemin $item.Path -droits $item.Droits
 }
 
+# Restreindre les exécutables système sauf pour G_IT
 $executables = @(
     "$env:windir\System32\cmd.exe",
     "$env:windir\System32\WindowsPowerShell\v1.0\powershell.exe",
@@ -67,10 +68,11 @@ foreach ($exe in $executables) {
         $acl.AddAccessRule($allow)
         Set-Acl -Path $exe -AclObject $acl
 
-        Write-Host "Restriction appliquée à : $exe"
+        Write-Host "🔒 Restriction appliquée à : $exe"
     }
 }
 
+# Définir le mot de passe de l’administrateur
 $admin = [ADSI]"WinNT://./Administrateur,User"
 $admin.SetPassword("Admin@2025!")
-Write-Host "Mot de passe administrateur local défini."
+Write-Host "🔐 Mot de passe administrateur local défini."
