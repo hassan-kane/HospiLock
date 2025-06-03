@@ -1,113 +1,83 @@
-param (
-    [string]$PermissionsJSON = ".\permissions.json"
+# 1. Droits NTFS classiques
+
+$regles = @(
+    @{ dossier = "C:\Hopital\Patients"; groupe = "G_Medecins"; droits = "ReadAndExecute" },
+    @{ dossier = "C:\Hopital\RH"; groupe = "G_RH"; droits = "Modify" },
+    @{ dossier = "C:\Hopital\Finance"; groupe = "G_Comptables"; droits = "Modify" },
+    @{ dossier = "C:\Hopital\Communication"; groupe = "G_Communication"; droits = "ReadAndExecute" },
+    @{ dossier = "C:\Hopital\Direction"; groupe = "G_Direction"; droits = "FullControl" },
+    @{ dossier = "C:\Hopital\Soins"; groupe = "G_Infirmiers"; droits = "Modify" },
+    @{ dossier = "C:\Hopital\Outils_IT"; groupe = "G_IT"; droits = "FullControl" }
 )
 
-if (-not (Test-Path $PermissionsJSON)) {
-    Write-Error "Fichier JSON introuvable : $PermissionsJSON"
-    exit
-}
-
-$permissionsData = Get-Content $PermissionsJSON | ConvertFrom-Json
-
-function Appliquer-Droits {
-    param (
-        [string]$chemin,
-        [array]$droits
-    )
-
-    if (!(Test-Path $chemin)) {
-        Write-Warning "⚠️ Le chemin '$chemin' n'existe pas. Aucune permission appliquée."
-        return
+foreach ($regle in $regles) {
+    if (Test-Path $regle.dossier) {
+        $acl = Get-Acl $regle.dossier
+        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+            $regle.groupe,
+            $regle.droits,
+            "ContainerInherit,ObjectInherit",
+            "None",
+            "Allow"
+        )
+        $acl.SetAccessRule($rule)
+        Set-Acl -Path $regle.dossier -AclObject $acl
+        Write-Output " Droits '$($regle.droits)' appliqués à $($regle.groupe) sur $($regle.dossier)"
     }
-
-    $acl = Get-Acl $chemin
-
-    # 🔒 Désactiver héritage et supprimer permissions héritées
-    $acl.SetAccessRuleProtection($true, $false)
-
-    # Nettoyer les règles existantes
-    $acl.Access | ForEach-Object { $acl.RemoveAccessRule($_) }
-
-    foreach ($droit in $droits) {
-        $groupe = $droit.Groupe
-        $permission = $droit.Permission
-
-        try {
-            $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-                $groupe, $permission, "ContainerInherit,ObjectInherit", "None", "Allow"
-            )
-            $acl.AddAccessRule($rule)
-        } catch {
-            Write-Warning "Erreur lors de l'ajout des droits pour $groupe sur $chemin avec '$permission'"
-        }
-    }
-
-    Set-Acl -Path $chemin -AclObject $acl
-    Write-Host "✅ Droits appliqués sur : $chemin"
 }
 
-# Application des permissions depuis le JSON
-foreach ($item in $permissionsData) {
-    Appliquer-Droits -chemin $item.Path -droits $item.Droits
+
+# 2. Cas croisés – accès spécifiques ciblés
+
+
+# 2.1 RH (rh1) peut lire un fichier dans Direction
+$file = "C:\Hopital\Direction\Docs\strategie_2025.docx"
+if (Test-Path $file) {
+    $acl = Get-Acl $file
+    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("rh1", "Read", "Allow")
+    $acl.AddAccessRule($rule)
+    Set-Acl $file $acl
+    Write-Output "Accès READ accordé à rh1 sur $file"
 }
 
-# ================================
-# Restreindre les outils système
-# ================================
+# 2.2 G_Medecins peut lire un fichier dans Communication
+$file = "C:\Hopital\Communication\Campagnes\campagne_printemps.docx"
+if (Test-Path $file) {
+    $acl = Get-Acl $file
+    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("G_Medecins", "ReadAndExecute", "Allow")
+    $acl.AddAccessRule($rule)
+    Set-Acl $file $acl
+    Write-Output " Accès READ accordé à G_Medecins sur $file"
+}
+
+# 2.3 IT (info1) peut modifier le dossier Evaluations RH
+$dossier = "C:\Hopital\RH\Evaluations"
+if (Test-Path $dossier) {
+    $acl = Get-Acl $dossier
+    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("info1", "Modify", "ContainerInherit,ObjectInherit", "None", "Allow")
+    $acl.AddAccessRule($rule)
+    Set-Acl $dossier $acl
+    Write-Output "Accès MODIFY accordé à info1 sur $dossier"
+}
+
+
+# 3. Blocage des outils système sensibles
+
 $executables = @(
-    "$env:windir\System32\cmd.exe",
-    "$env:windir\System32\WindowsPowerShell\v1.0\powershell.exe",
-    "$env:windir\System32\regedit.exe",
-    "$env:windir\System32\eventvwr.exe",
-    "$env:windir\System32\services.msc",
-    "$env:windir\System32\diskmgmt.msc",
-    "$env:windir\System32\control.exe"
-)
-
-# Groupes NON autorisés à utiliser les outils système
-$groupesRestreints = @(
-    "G_Medecins", "G_Infirmiers", "G_Communication",
-    "G_RH", "G_Comptables", "G_Direction"
+    "C:\Windows\System32\cmd.exe",
+    "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+    "C:\Windows\System32\regedit.exe",
+    "C:\Windows\System32\eventvwr.exe",
+    "C:\Windows\System32\services.msc"
 )
 
 foreach ($exe in $executables) {
     if (Test-Path $exe) {
-        $acl = Get-Acl $exe
-
-        # Supprimer règles conflictuelles existantes
-        $acl.Access | Where-Object {
-            $_.IdentityReference -match "G_IT|Administrateurs|G_Medecins|G_Infirmiers|G_Communication|G_RH|G_Comptables|G_Direction"
-        } | ForEach-Object {
-            $acl.RemoveAccessRule($_)
-        }
-
-        # Appliquer les refus aux groupes non autorisés
-        foreach ($grp in $groupesRestreints) {
-            $deny = New-Object System.Security.AccessControl.FileSystemAccessRule(
-                $grp, "ReadAndExecute", "None", "None", "Deny"
-            )
-            $acl.AddAccessRule($deny)
-        }
-
-        # Autoriser les informaticiens
-        $allowIT = New-Object System.Security.AccessControl.FileSystemAccessRule(
-            "G_IT", "FullControl", "None", "None", "Allow"
-        )
-
-        # Autoriser les administrateurs
-        $allowAdmin = New-Object System.Security.AccessControl.FileSystemAccessRule(
-            "Administrateurs", "FullControl", "None", "None", "Allow"
-        )
-
-        $acl.AddAccessRule($allowIT)
-        $acl.AddAccessRule($allowAdmin)
-
-        Set-Acl -Path $exe -AclObject $acl
-        Write-Host "🔒 Accès restreint configuré pour : $exe"
+        icacls $exe /inheritance:r /remove:g "Users" "Authenticated Users" "Everyone" > $null
+        icacls $exe /grant:r "Administrateurs":RX > $null
+        icacls $exe /grant:r "G_IT":RX > $null
+        Write-Output " Outil restreint à Admins et G_IT : $exe"
+    } else {
+        Write-Output " Non trouvé : $exe"
     }
 }
-
-# Définir le mot de passe du compte Administrateur local
-$admin = [ADSI]"WinNT://./Administrateur,User"
-$admin.SetPassword("Admin@2025!")
-Write-Host "🔐 Mot de passe administrateur local défini."
