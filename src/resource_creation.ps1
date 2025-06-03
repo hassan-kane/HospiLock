@@ -17,26 +17,27 @@ $structure = $jsonContent.structure
 # Créer le dossier racine
 if (-not (Test-Path -Path $basePath)) {
     New-Item -Path $basePath -ItemType Directory | Out-Null
-    Write-Host "📁 Dossier racine créé : $basePath"
+    Write-Host "Dossier racine cree : $basePath"
 }
 
-# Créer récursivement les dossiers et fichiers
+# Créer tous les dossiers et fichiers
 foreach ($mainFolder in $structure.PSObject.Properties) {
     $mainPath = Join-Path $basePath $mainFolder.Name
     New-Item -Path $mainPath -ItemType Directory -Force | Out-Null
-    Write-Host "📁 Créé : $mainPath"
+    Write-Host "Cree : $mainPath"
 
     foreach ($subFolder in $mainFolder.Value.PSObject.Properties) {
         $subPath = Join-Path $mainPath $subFolder.Name
         New-Item -Path $subPath -ItemType Directory -Force | Out-Null
-        Write-Host "   📁 Sous-dossier : $subPath"
+        Write-Host "   Sous-dossier : $subPath"
 
         foreach ($file in $subFolder.Value) {
             $filePath = Join-Path $subPath $file
             New-Item -Path $filePath -ItemType File -Force | Out-Null
-            Write-Host "      📄 Fichier : $filePath"
+            Write-Host "      Fichier : $filePath"
         }
     }
 }
 
-Write-Host "`n✅ Structure créée avec succès."
+Write-Host ""
+Write-Host "Structure creee avec succes."
