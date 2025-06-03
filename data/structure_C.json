@@ -1,0 +1,57 @@
+{
+    "base": "C:\\Hopital",
+    "structure": {
+        "Patients": {
+            "Dossiers": [
+                "cardio.txt",
+                "neuro.txt",
+                "onco.txt"
+            ],
+            "Résumés": [
+                "rapport_global.txt"
+            ]
+        },
+        "Soins": {
+            "Checklists": [
+                "pre-op.pdf",
+                "post-op.pdf"
+            ],
+            "Infirmiers": []
+        },
+        "Finance": {
+            "Comptes": [
+                "bilan_2023.xlsx"
+            ],
+            "Budgets": [
+                "prévisions_2024.xlsx"
+            ]
+        },
+        "RH": {
+            "DossiersAgents": [
+                "contrat_durand.pdf"
+            ],
+            "Evaluations": []
+        },
+        "Communication": {
+            "Campagnes": [
+                "campagne_printemps.docx"
+            ]
+        },
+        "Outils_IT": {
+            "Scripts": [
+                "maintenance.ps1",
+                "backup.ps1"
+            ]
+        },
+        "Direction": {
+            "Docs": [
+                "strategie_2025.docx"
+            ]
+        },
+        "Public": {
+            "Infos": [
+                "accueil.txt"
+            ]
+        }
+    }
+}

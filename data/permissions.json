@@ -1,58 +1,51 @@
 [
   {
-    "Path": "D:\\Dossiers_Patients",
+    "Path": "C:\\Hopital\\Patients",
     "Droits": [
       { "Groupe": "G_Medecins", "Permission": "Modify" }
     ]
   },
   {
-    "Path": "D:\\Soins",
+    "Path": "C:\\Hopital\\Soins",
     "Droits": [
       { "Groupe": "G_Medecins", "Permission": "Modify" },
       { "Groupe": "G_Infirmiers", "Permission": "Modify" }
     ]
   },
   {
-    "Path": "D:\\RH",
-    "Droits": [
-      { "Groupe": "G_RH", "Permission": "Modify" }
-    ]
-  },
-  {
-    "Path": "D:\\Finance",
+    "Path": "C:\\Hopital\\Finance",
     "Droits": [
       { "Groupe": "G_Comptables", "Permission": "Modify" }
     ]
   },
   {
-    "Path": "D:\\Comptes_Rendus",
+    "Path": "C:\\Hopital\\RH",
     "Droits": [
-      { "Groupe": "G_Medecins", "Permission": "ReadAndExecute" },
-      { "Groupe": "G_Direction", "Permission": "ReadAndExecute" }
+      { "Groupe": "G_RH", "Permission": "Modify" }
     ]
   },
   {
-    "Path": "D:\\Communication",
+    "Path": "C:\\Hopital\\Communication",
     "Droits": [
       { "Groupe": "G_Communication", "Permission": "Modify" }
     ]
   },
   {
-    "Path": "D:\\Outils_Systeme",
+    "Path": "C:\\Hopital\\Outils_IT",
     "Droits": [
       { "Groupe": "G_IT", "Permission": "Modify" }
     ]
   },
   {
-    "Path": "D:\\Direction",
+    "Path": "C:\\Hopital\\Direction",
     "Droits": [
       { "Groupe": "G_Direction", "Permission": "Modify" }
     ]
   },
   {
-    "Path": "D:\\Public",
+    "Path": "C:\\Hopital\\Public",
     "Droits": [
-      { "Groupe": "Everyone", "Permission": "ReadAndExecute" }
+      { "Groupe": "Tout le monde", "Permission": "ReadAndExecute" }
     ]
   }
 ]
